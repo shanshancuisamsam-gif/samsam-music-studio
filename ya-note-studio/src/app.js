@@ -1,0 +1,57 @@
+import './components.js';
+import { initial, midi, pitches, restore, storageKey } from './music.js';
+
+const score = document.querySelector('score-sheet');
+const editor = document.querySelector('pitch-editor');
+const player = document.querySelector('melody-player');
+let values = initial.slice(), active = 0, sound, run = 0, playing = false;
+let voices = [], timer;
+try { values = restore(JSON.parse(localStorage.getItem(storageKey))); } catch {}
+function draw() { score.update(values,active); editor.update(values,active); }
+function save() {
+  try { localStorage.setItem(storageKey,JSON.stringify(values)); } catch {}
+  draw();
+}
+function stop() {
+  run++;
+  clearTimeout(timer);
+  voices.forEach(voice => { try { voice.stop(); } catch {} });
+  voices = [];
+  playing = false;
+  player.state(false);
+}
+function change(value) {
+  stop();
+  values[active] = Math.max(0,Math.min(pitches.length-1,value));
+  save();
+}
+document.addEventListener('pick',e => { active = e.detail; draw(); });
+document.addEventListener('pitch',e => change(e.detail));
+document.addEventListener('step',e => change(values[active]+e.detail));
+document.addEventListener('reset',() => { stop(); values=initial.slice(); active=0; save(); });
+document.addEventListener('halt',stop);
+document.addEventListener('play',async event => {
+  if (playing) return stop();
+  const token = ++run, beat = 60/event.detail;
+  playing = true;
+  player.state(true,'播放中…');
+  try {
+    sound ??= new AudioContext();
+    await sound.resume();
+    if (token !== run) return;
+    const start = sound.currentTime + .04;
+    values.forEach((pitch,index) => {
+      const tone = sound.createOscillator(), gain = sound.createGain(), time = start + index*beat;
+      tone.frequency.value = 440 * 2**((midi[pitch]-69)/12);
+      gain.gain.setValueAtTime(.0001,time);
+      gain.gain.exponentialRampToValueAtTime(.22,time+.025);
+      gain.gain.exponentialRampToValueAtTime(.0001,time+beat-.03);
+      tone.connect(gain).connect(sound.destination);
+      tone.onended = () => { tone.disconnect(); gain.disconnect(); };
+      tone.start(time); tone.stop(time+beat); voices.push(tone);
+    });
+    timer = setTimeout(stop, 50+1000*values.length*beat);
+  } catch { if (run===token) {stop(); player.state(false,'无法试听，请检查浏览器声音设置。');} }
+});
+document.querySelector('#print').onclick = () => window.print();
+draw();
