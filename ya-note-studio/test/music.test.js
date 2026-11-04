@@ -33,3 +33,8 @@ test('C3–B5 covers 36 pitches and 51 spellings, including both octave crossing
   assert.equal(pitches[nextPitch(pitches.indexOf('B3'),1)],'C4');
   assert.equal(pitches[nextPitch(pitches.indexOf('B4'),1)],'C5');
 });
+
+test('空白、单音和十二音旋律可保存，过长的存档回退', () => {
+  for(const count of [0,1,5,9,12]) assert.deepEqual(restore(Array(count).fill(1)),Array(count).fill(1));
+  assert.deepEqual(restore(Array(13).fill(0)),initial);
+});

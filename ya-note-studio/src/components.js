@@ -1,4 +1,4 @@
-import { pitches, staffY, octaveChoices, symbolsFor, bassPitch, ledgerYs } from './music.js';
+import { maxNotes, pitches, staffY, octaveChoices, symbolsFor, bassPitch, ledgerYs } from './music.js';
 
 class Control extends HTMLElement {
   send(type, value) {
@@ -117,6 +117,7 @@ class ScoreSheet extends Control {
         <path d="M-2 10C-19 5 -12 -12 0 -12C21 -12 24 13 8 19C-10 27 -27 12 -21 -5C-17 -17 0 -30 5 -42C11 -55 10 -68 6 -72C-2 -69 -5 -54 -3 -39L8 38Q10 54 -5 52Q-14 51 -12 43"/><circle cx="-10" cy="43" r="3.6" fill="#202020"/>
       </g>
       <g transform="translate(225 617)" fill="#202020"><path d="M2 1C1 -15 10 -28 26 -28C50 -28 61 -10 55 12C49 36 21 56 0 65C23 49 43 27 44 3C45 -12 39 -24 26 -24C15 -24 8 -16 7 -7C20 -16 31 -3 23 7C15 17 2 12 2 1Z"/><circle cx="66" cy="-13.5" r="4.2"/><circle cx="66" cy="13.5" r="4.2"/></g>
+      <g aria-label="终止线 · Final barline" fill="#252a27"><rect x="1273" y="342" width="3.5" height="356"/><rect x="1283" y="342" width="11" height="356"/></g>
       <g class="notes"></g></g>
       <g class="painted-details" pointer-events="none"></g>
       <g class="syllable-art" pointer-events="none" transform="translate(335 946)">
@@ -170,7 +171,7 @@ class ScoreSheet extends Control {
       const note = event.target.closest('[data-note]');
       if (!note) return;
       const index = Number(note.dataset.note);
-      const actions = {ArrowLeft:['pick', Math.max(0,index-1)],ArrowRight:['pick',Math.min(4,index+1)],ArrowUp:['step',1],ArrowDown:['step',-1],Enter:['pick',index],' ':['pick',index]};
+      const actions = {ArrowLeft:['pick', Math.max(0,index-1)],ArrowRight:['pick',Math.min(this.querySelector('.notes').children.length-1,index+1)],ArrowUp:['step',1],ArrowDown:['step',-1],Enter:['pick',index],' ':['pick',index]};
       if (!actions[event.key]) return;
       event.preventDefault();
       if (event.key === 'ArrowUp' || event.key === 'ArrowDown') this.send('pick', index);
@@ -180,10 +181,12 @@ class ScoreSheet extends Control {
   }
   update(values, active) {
     const symbols = symbolsFor(values);
+    const spacing = Math.min(180, 855/Math.max(1,values.length-1));
+    const hitWidth = Math.min(spacing,130);
     this.querySelector('.notes').innerHTML = values.map((pitch,index) => {
-      const x = 385 + 180 * index, y = staffY(pitch), up = y > (bassPitch(pitch) ? 644 : 396);
+      const x = 385 + spacing * index, y = staffY(pitch), up = y > (bassPitch(pitch) ? 644 : 396);
       return `<g tabindex="0" role="button" data-note="${index}" aria-pressed="${index===active}" aria-label="第 ${index+1} 个音 ${pitches[pitch]}" class="${index===active?'selected':''}">
-        <rect x="${x-65}" y="245" width="130" height="545" fill="transparent"/>
+        <rect x="${x-hitWidth/2}" y="245" width="${hitWidth}" height="545" fill="transparent"/>
         ${index===active?`<ellipse class="halo" cx="${x}" cy="${y}" rx="31" ry="23"/>`:''}
         ${ledgerYs(pitch).map(line => `<path d="M${x-25} ${line}h50" stroke="currentColor" stroke-width="3"/>`).join('')}
         <text x="${x-29}" y="${y+9}" text-anchor="end" font-family="serif" font-size="40">${symbols[index]}</text>
@@ -195,7 +198,7 @@ class ScoreSheet extends Control {
 }
 class PitchEditor extends Control {
   connectedCallback() {
-    this.innerHTML = `<div class="panel"><small>01 &nbsp; / &nbsp; NOTE EDITOR</small><h2>音高编辑</h2><label>练声音节 · Syllable <input id="syllable" value="YA" maxlength="12" lang="en" inputmode="text" autocapitalize="off" spellcheck="false"></label><br><label>选择音符 · Note</label><div class="steps"></div><label>八度组 · Octave <select class="octave"><option>3</option><option selected>4</option><option>5</option></select></label><div class="pitches"></div><p>← → 选音符　↑ ↓ 调音高</p><button class="reset">恢复初始旋律</button></div>`;
+    this.innerHTML = `<div class="panel"><small>01 &nbsp; / &nbsp; NOTE EDITOR</small><h2>音高编辑</h2><label>练声音节 · Syllable <input id="syllable" value="YA" maxlength="12" lang="en" inputmode="text" autocapitalize="off" spellcheck="false"></label><br><label>选择音符 · Note</label><div class="steps"></div><div class="note-count"><button class="insert">＋ 加音</button> <button class="remove">− 删音</button> <output></output></div><label>八度组 · Octave <select class="octave"><option>3</option><option selected>4</option><option>5</option></select></label><div class="pitches"></div><p>← → 选音符　↑ ↓ 调音高</p><button class="reset">恢复初始旋律</button></div>`;
     const addButton = (parent, action, index) => {
       const button = document.createElement('button');
       button.dataset.index = index;
@@ -203,7 +206,9 @@ class PitchEditor extends Control {
       parent.append(button);
       return button;
     };
-    for (let index=0; index<5; index++) addButton(this.querySelector('.steps'),'pick',index);
+    this.makeStep = index => addButton(this.querySelector('.steps'),'pick',index);
+    this.querySelector('.insert').onclick = () => this.send('insert-note');
+    this.querySelector('.remove').onclick = () => this.send('remove-note');
     const selector = this.querySelector('.octave');
     const populate = () => {
       this.querySelector('.pitches').replaceChildren();
@@ -226,6 +231,13 @@ class PitchEditor extends Control {
   update(values, active) {
     this.values = values;
     this.active = active;
+    const steps = this.querySelector('.steps');
+    while (steps.children.length < values.length) this.makeStep(steps.children.length);
+    while (steps.children.length > values.length) steps.lastElementChild.remove();
+    this.querySelector('.insert').disabled = values.length >= maxNotes;
+    this.querySelector('.remove').disabled = !values.length;
+    this.querySelector('output').textContent = values.length+' / '+maxNotes;
+    this.querySelectorAll('.pitches button').forEach(button => button.disabled = !values.length);
     this.querySelectorAll('.steps button').forEach((button,index) => {
       button.textContent = pitches[values[index]];
       button.setAttribute('aria-label', '第 '+(index+1)+' 个音 '+button.textContent);

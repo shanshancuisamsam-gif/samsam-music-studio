@@ -6,3 +6,5 @@
 
 header b{font-family:ui-rounded,"Trebuchet MS",system-ui,sans-serif;font-weight:800;letter-spacing:-.035em}
 .intro>div{min-width:0}.intro h1{width:clamp(235px,39vw,510px);max-width:100%;margin:4px 0}.intro h1 svg{overflow:visible}.intro button{flex-shrink:0}
+
+.note-count{display:flex;align-items:center;gap:5px;margin:0 0 15px}.note-count output{margin-left:auto;color:#526658;font-size:13px}button:disabled{opacity:.45;cursor:default}

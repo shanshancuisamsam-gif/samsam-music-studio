@@ -1,5 +1,5 @@
 import { drawHeading } from './components.js';
-import { initial, midi, pitches, restore, storageKey, nextPitch } from './music.js';
+import { maxNotes, initial, midi, pitches, restore, storageKey, nextPitch } from './music.js';
 
 const score = document.querySelector('score-sheet');
 const editor = document.querySelector('pitch-editor');
@@ -30,7 +30,8 @@ displaySyllable();
 function draw() {
   score.update(values,active);
   const selector = editor.querySelector('.octave');
-  selector.value = pitches[values[active]].at(-1);
+  if (values.length) selector.value = pitches[values[active]].at(-1);
+  player.querySelector('.play').disabled = !values.length;
   editor.populate();
   editor.update(values,active);
 }
@@ -54,6 +55,21 @@ function change(value) {
 document.addEventListener('pick',e => { active = e.detail; draw(); });
 document.addEventListener('pitch',e => change(e.detail));
 document.addEventListener('step',e => change(nextPitch(values[active],e.detail)));
+document.addEventListener('insert-note',() => {
+  if (values.length >= maxNotes) return;
+  stop();
+  const pitch = values[active] ?? 0;
+  active = values.length ? active+1 : 0;
+  values.splice(active,0,pitch);
+  save();
+});
+document.addEventListener('remove-note',() => {
+  if (!values.length) return;
+  stop();
+  values.splice(active,1);
+  active = Math.max(0,Math.min(active,values.length-1));
+  save();
+});
 document.addEventListener('reset',() => { stop(); values=initial.slice(); active=0; save(); });
 document.addEventListener('halt',stop);
 document.addEventListener('play',async event => {

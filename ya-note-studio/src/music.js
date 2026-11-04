@@ -43,8 +43,9 @@ export function symbolsFor(values) {
     return sign || (previous ? '♮' : '');
   });
 }
+export const maxNotes = 12;
 export function restore(value) {
-  return Array.isArray(value) && value.length === 5 &&
+  return Array.isArray(value) && value.length <= maxNotes &&
     value.every(n => Number.isInteger(n) && n >= 0 && n < pitches.length)
     ? value.slice() : initial.slice();
 }
