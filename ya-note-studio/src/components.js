@@ -110,13 +110,12 @@ class ScoreSheet extends Control {
         <text x="745" y="213" font-size="34" class="sheet-subtitle"></text>
         <text class="studio-mark" x="745" y="1017" font-size="23">samsam music studio</text>
       </g>
-      <g transform="translate(118 0) scale(.84 1)">
+      <g class="grand-staff">
       <path d="${staff(342)} ${staff(590)} M197 342V698" stroke="#252a27" stroke-width="2.4" fill="none"/>
       <path d="M192 341Q170 354 180 432Q192 500 166 520Q192 539 180 605Q169 686 192 699Q181 676 189 610Q201 543 174 520Q201 499 189 432Q182 370 192 341Z" fill="#252a27"/>
-      <g transform="translate(252 423) scale(1.35)" fill="none" stroke="#202020" stroke-width="3.8" stroke-linecap="round">
-        <path d="M-2 10C-19 5 -12 -12 0 -12C21 -12 24 13 8 19C-10 27 -27 12 -21 -5C-17 -17 0 -30 5 -42C11 -55 10 -68 6 -72C-2 -69 -5 -54 -3 -39L8 38Q10 54 -5 52Q-14 51 -12 43"/><circle cx="-10" cy="43" r="3.6" fill="#202020"/>
-      </g>
-      <g transform="translate(225 617)" fill="#202020"><path d="M2 1C1 -15 10 -28 26 -28C50 -28 61 -10 55 12C49 36 21 56 0 65C23 49 43 27 44 3C45 -12 39 -24 26 -24C15 -24 8 -16 7 -7C20 -16 31 -3 23 7C15 17 2 12 2 1Z"/><circle cx="66" cy="-13.5" r="4.2"/><circle cx="66" cy="13.5" r="4.2"/></g>
+      <!-- Bravura regular, SMuFL gClef and fClef. See licenses/Bravura.txt. -->
+      <path aria-label="高音谱号" fill="#202020" transform="translate(222 423) scale(.108 -.108)" d="M376 415C374 427 376 428 382 434C398 449 419 470 438 491C522 583 572 702 572 815C572 902 548 988 507 1048C492 1070 466 1098 455 1098C441 1098 410 1072 390 1050C316 968 292 843 292 739C292 681 299 616 306 575C308 563 309 561 297 551C233 498 164 437 112 373C43 287 0 194 0 87C0 -87 119 -252 364 -252C387 -252 413 -250 433 -246C444 -244 446 -243 448 -255C460 -322 475 -409 475 -456C475 -604 375 -622 316 -622C262 -622 236 -606 236 -593C236 -586 245 -583 268 -576C299 -567 335 -540 335 -482C335 -427 300 -380 239 -380C172 -380 132 -433 132 -495C132 -560 171 -658 322 -658C389 -658 519 -628 519 -458C519 -401 501 -306 490 -244C488 -232 489 -233 503 -227C604 -187 671 -102 671 11C671 139 577 252 430 252C404 252 404 252 401 270ZM470 943C503 943 530 916 530 861C530 792 497 728 419 650C403 634 379 611 356 591C349 585 345 586 343 599C339 625 337 659 337 691C337 847 409 943 470 943ZM361 262C364 243 364 244 346 238C258 208 201 129 201 44C201 -46 248 -110 316 -133C324 -136 336 -139 343 -139C351 -139 355 -134 355 -128C355 -121 347 -118 340 -115C298 -97 268 -54 268 -8C268 49 307 92 368 109C384 113 386 112 388 101L438 -197C440 -208 439 -208 424 -211C408 -214 388 -216 368 -216C193 -216 80 -119 80 20C80 79 90 158 173 252C233 319 279 356 326 394C336 402 338 401 340 390ZM430 103C428 115 429 118 441 117C522 110 589 42 589 -46C589 -109 551 -160 495 -188C483 -194 481 -194 479 -182Z"/>
+      <path aria-label="低音谱号" fill="#202020" transform="translate(222 617) scale(.108 -.108)" d="M252 262C78 262 0 135 0 39C0 -41 42 -110 123 -110C186 -110 229 -66 229 -4C229 60 182 100 133 100C106 100 96 93 83 93C70 93 67 101 67 111C67 151 127 224 229 224C335 224 381 120 381 -37C381 -140 359 -260 297 -356C237 -449 134 -534 10 -605C1 -610 -5 -615 -5 -623C-5 -629 -1 -635 8 -635C13 -635 19 -633 25 -630C158 -565 286 -489 392 -375C479 -281 531 -159 531 -28C531 146 425 262 252 262ZM629 180C598 180 574 156 574 125C574 94 598 70 629 70C660 70 684 94 684 125C684 156 660 180 629 180ZM630 -71C599 -71 576 -94 576 -125C576 -156 599 -179 630 -179C661 -179 684 -156 684 -125C684 -94 661 -71 630 -71Z"/>
       <g aria-label="终止线 · Final barline" fill="#252a27"><rect x="1273" y="342" width="3.5" height="356"/><rect x="1283" y="342" width="11" height="356"/></g>
       <g class="notes"></g></g>
       <g class="painted-details" pointer-events="none"></g>
@@ -181,10 +180,10 @@ class ScoreSheet extends Control {
   }
   update(values, active) {
     const symbols = symbolsFor(values);
-    const spacing = Math.min(180, 855/Math.max(1,values.length-1));
+    const spacing = Math.min(220, 880/Math.max(1,values.length-1));
     const hitWidth = Math.min(spacing,130);
     this.querySelector('.notes').innerHTML = values.map((pitch,index) => {
-      const x = 385 + spacing * index, y = staffY(pitch), up = y > (bassPitch(pitch) ? 644 : 396);
+      const x = 360 + spacing * index, y = staffY(pitch), up = y > (bassPitch(pitch) ? 644 : 396);
       return `<g tabindex="0" role="button" data-note="${index}" aria-pressed="${index===active}" aria-label="第 ${index+1} 个音 ${pitches[pitch]}" class="${index===active?'selected':''}">
         <rect x="${x-hitWidth/2}" y="245" width="${hitWidth}" height="545" fill="transparent"/>
         ${index===active?`<ellipse class="halo" cx="${x}" cy="${y}" rx="31" ry="23"/>`:''}
