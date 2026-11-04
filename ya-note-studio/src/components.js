@@ -9,35 +9,74 @@ class ScoreSheet extends Control {
   connectedCallback() {
     const staff = top => Array.from({length:5}, (_,i) => 'M197 '+(top+27*i)+'H1294').join(' ');
     this.innerHTML = `<svg viewBox="0 0 1491 1055" aria-label="高音和低音大谱表">
-      <defs><clipPath id="edges"><rect width="180" height="1055"/><rect x="1310" width="181" height="1055"/></clipPath></defs>
-      <rect width="1491" height="1055" fill="white"/><image clip-path="url(#edges)" width="1491" height="1055"/>
+      <defs>
+        <image id="painted-paper" width="1491" height="1055"/>
+        <mask id="decor-only" maskUnits="userSpaceOnUse" x="0" y="0" width="1491" height="1055">
+          <rect width="1491" height="1055" fill="white"/>
+          <path fill="black" d="M300 54h895v270H300z M192 415h1106v214H192z M854 636h278v142H854z M775 791h449v60H775z M275 720h480v211H275z"/>
+        </mask>
+        <clipPath id="painted-title"><rect x="300" y="54" width="895" height="269"/></clipPath>
+        <clipPath id="painted-ya"><rect x="277" y="722" width="475" height="207"/></clipPath>
+        <clipPath id="painted-mouth"><path d="M854 636h278v142H854z M775 791h449v60H775z"/></clipPath>
+        <linearGradient id="berry" x2=".8" y2="1"><stop stop-color="#ff8397"/><stop offset=".5" stop-color="#ea385f"/><stop offset="1" stop-color="#f55b74"/></linearGradient>
+        <linearGradient id="apricot" x2=".7" y2="1"><stop stop-color="#ffc66b"/><stop offset=".5" stop-color="#ff922c"/><stop offset="1" stop-color="#ef7720"/></linearGradient>
+      </defs>
+      <rect width="1491" height="1055" fill="white"/>
+      <g class="border-art" pointer-events="none"></g>
       <g text-anchor="middle" fill="#2c6659" font-family="system-ui">
         <text x="745" y="145" font-size="64" font-weight="bold" class="sheet-title"></text>
         <text x="745" y="213" font-size="34" class="sheet-subtitle"></text>
-        <text x="745" y="1017" font-size="23">samsam music studio</text>
+        <text class="studio-mark" x="745" y="1017" font-size="23">samsam music studio</text>
       </g>
+      <g transform="translate(118 0) scale(.84 1)">
       <path d="${staff(342)} ${staff(590)} M197 342V698" stroke="#252a27" stroke-width="2.4" fill="none"/>
       <path d="M192 341Q170 354 180 432Q192 500 166 520Q192 539 180 605Q169 686 192 699Q181 676 189 610Q201 543 174 520Q201 499 189 432Q182 370 192 341Z" fill="#252a27"/>
       <g transform="translate(252 423) scale(1.35)" fill="none" stroke="#202020" stroke-width="3.8" stroke-linecap="round">
         <path d="M-2 10C-19 5 -12 -12 0 -12C21 -12 24 13 8 19C-10 27 -27 12 -21 -5C-17 -17 0 -30 5 -42C11 -55 10 -68 6 -72C-2 -69 -5 -54 -3 -39L8 38Q10 54 -5 52Q-14 51 -12 43"/><circle cx="-10" cy="43" r="3.6" fill="#202020"/>
       </g>
       <g transform="translate(225 617)" fill="#202020"><path d="M2 1C1 -15 10 -28 26 -28C50 -28 61 -10 55 12C49 36 21 56 0 65C23 49 43 27 44 3C45 -12 39 -24 26 -24C15 -24 8 -16 7 -7C20 -16 31 -3 23 7C15 17 2 12 2 1Z"/><circle cx="66" cy="-13.5" r="4.2"/><circle cx="66" cy="13.5" r="4.2"/></g>
-      <text class="sheet-vowel" x="197" y="904" font-family="system-ui" font-size="78" fill="#bd5747" font-weight="bold"></text>
-      <g class="notes"></g></svg>`;
-    this.querySelector('image').setAttribute('href', this.getAttribute('background'));
-    if (this.getAttribute('background').includes('webp')) {
-      const svg = this.querySelector('svg');
-      svg.insertAdjacentHTML('beforeend', '<svg class="original-title" x="180" width="1130" height="280" viewBox="180 0 1130 280"><image width="1491" height="1055"/></svg><svg class="mouth" x="870" y="802" width="380" height="135" viewBox="747 625 490 174"><image width="1491" height="1055"/></svg>');
-      for (const image of svg.querySelectorAll('svg image')) image.setAttribute('href',this.getAttribute('background'));
+      <g class="notes"></g></g>
+      <g class="painted-details" pointer-events="none"></g>
+      <g class="syllable-art" pointer-events="none" transform="translate(313 898)">
+        <text x="-15" y="-55" font-size="52" text-anchor="end" fill="#ef912d">“</text>
+        <path d="M-38 -27l-24 9 M-34 -12l-18 15" stroke="#f6c957" stroke-width="7" stroke-linecap="round"/>
+        <text class="sheet-vowel" font-family="ui-rounded, Trebuchet MS, sans-serif" font-weight="900" stroke-width="2" stroke-linejoin="round"></text>
+        <g class="end-mark"><text y="-55" font-size="52" fill="#ef912d">”</text><path d="M24 -20l22 4 M20 -7l14 12" stroke="#f4c75c" stroke-width="7" stroke-linecap="round"/></g>
+      </g></svg>`;
+    this.watercolor = this.getAttribute('background').includes('webp');
+    if (this.watercolor) {
+      this.querySelector('#painted-paper').setAttribute('href',this.getAttribute('background'));
+      this.querySelector('.border-art').innerHTML = '<use href="#painted-paper" mask="url(#decor-only)"/>';
+      this.querySelector('.studio-mark').style.display = 'none';
+      this.querySelector('.painted-details').innerHTML = `
+        <g class="original-title" transform="translate(109 0) scale(.85)"><use href="#painted-paper" clip-path="url(#painted-title)"/></g>
+        <g class="original-ya" transform="translate(87 274) scale(.8)"><use href="#painted-paper" clip-path="url(#painted-ya)"/></g>
+        <g class="mouth" transform="translate(292 350) scale(.71)"><use href="#painted-paper" clip-path="url(#painted-mouth)"/></g>`;
     }
     this.setSyllable('YA');
     this.bindNotes();
   }
   setSyllable(value) {
-    this.querySelectorAll('.original-title,.mouth').forEach(part => part.style.display = value.toUpperCase()==='YA' ? '' : 'none');
-    this.querySelector('.sheet-title').textContent = value+' 音练习曲';
-    this.querySelector('.sheet-subtitle').textContent = value+' Vocal Exercise';
-    this.querySelector('.sheet-vowel').textContent = value;
+    const original = this.watercolor && value === 'YA';
+    this.querySelectorAll('.original-title,.original-ya,.mouth').forEach(part => part.style.display = original ? '' : 'none');
+    this.querySelectorAll('.sheet-title,.sheet-subtitle,.syllable-art').forEach(part => part.style.display = original ? 'none' : '');
+    const colors = ['#eb4969','#ef9134','#60ad62','#4499cd','#9368ba'];
+    const paintText = (node, text, palette) => {
+      node.replaceChildren();
+      Array.from(text).forEach((letter,i) => {
+        const span = document.createElementNS('http://www.w3.org/2000/svg','tspan');
+        span.setAttribute('fill',palette[i%palette.length]);
+        span.textContent = letter;
+        node.append(span);
+      });
+    };
+    paintText(this.querySelector('.sheet-title'),value+' 音练习曲',colors);
+    paintText(this.querySelector('.sheet-subtitle'),value+' Vocal Exercise',colors);
+    const vowel = this.querySelector('.sheet-vowel');
+    const size = Math.min(110,580/(value.length*.85));
+    vowel.setAttribute('font-size',size);
+    paintText(vowel,value,['url(#berry)','url(#apricot)']);
+    this.querySelector('.end-mark').setAttribute('transform','translate('+(vowel.getComputedTextLength()+9)+' 0)');
   }
   bindNotes() {
     this.onclick = event => {
