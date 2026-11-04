@@ -5,23 +5,69 @@ class Control extends HTMLElement {
     this.dispatchEvent(new CustomEvent(type, {bubbles:true, detail:value}));
   }
 }
+// Rounded centre lines keep the lettering consistent on screen and on printed sheets.
+const bubblePaths = {
+  A:'M3 0L23 -60Q25 -65 28 -58L48 0M12 -21H39', B:'M5 0V-60H24C51 -60 50 -32 25 -32H7M24 -32C56 -32 54 0 26 0Z',
+  C:'M44 -50C18 -78 -9 -40 8 -12Q23 8 44 -7', D:'M5 0V-60H18C58 -60 58 0 18 0Z',
+  E:'M42 -60H5V0H43M7 -31H34', F:'M5 0V-60H42M6 -31H34',
+  G:'M44 -51C16 -76 -4 -40 7 -15Q18 8 44 -4V-26H29', H:'M5 -60V0M44 -60V0M6 -31H43',
+  I:'M14 -60H36M25 -59V0M14 0H36', J:'M40 -60V-17C40 8 6 7 5 -13',
+  K:'M5 -60V0M43 -60L6 -26M21 -37L45 0', L:'M7 -60V0H43',
+  M:'M3 0V-60L25 -28L47 -60V0', N:'M5 0V-60L44 0V-60',
+  O:'M25 -61C-3 -61 -4 0 25 0C54 0 54 -61 25 -61Z', P:'M6 0V-60H26C52 -60 52 -28 26 -28H8',
+  Q:'M25 -61C-3 -61 -4 0 25 0C54 0 54 -61 25 -61ZM30 -15L48 4', R:'M5 0V-60H25C52 -60 52 -30 25 -30H7M24 -30L46 0',
+  S:'M42 -53C20 -72 -5 -50 11 -36C20 -29 47 -30 44 -13C41 5 17 6 5 -5', T:'M2 -60H48M25 -59V0',
+  U:'M5 -60V-21C5 8 44 8 44 -21V-60', V:'M2 -60L24 0L47 -60',
+  W:'M0 -60L10 0L25 -35L39 0L50 -60', X:'M5 -60L45 0M44 -60L5 0',
+  Y:'M2 -60L25 -30L48 -60M25 -29V0', Z:'M5 -60H45L5 0H45'
+};
+function drawBubbles(group,value) {
+  group.replaceChildren();
+  const scale = Math.min(2.05, 800/(value.length*73));
+  group.setAttribute('transform','scale('+scale+')');
+  group.setAttribute('aria-label',value);
+  [...value].forEach((letter,i) => {
+    const lowercase = letter !== letter.toUpperCase();
+    const paint = i%2 ? ['#d77223','#ffab47','#ffdd97'] : ['#cf3757','#fb627f','#ffb0bf'];
+    const ns = 'http://www.w3.org/2000/svg';
+    const glyph = document.createElementNS(ns,lowercase?'text':'g');
+    glyph.setAttribute('transform','translate('+(i*73)+' '+(i%2?-1:0)+') rotate('+(i%2?3:-3)+' 24 -30)');
+    if (lowercase) {
+      glyph.textContent=letter;
+      for(const [key,val] of Object.entries({'font-family':'sans-serif','font-size':82,'font-weight':900,fill:paint[1],stroke:paint[1],'stroke-width':5,'stroke-linejoin':'round','paint-order':'stroke'})) glyph.setAttribute(key,val);
+    } else {
+      for(const [width,color,dy] of [[19,paint[0],1.5],[16,paint[1],0],[3,paint[2],-4]]) {
+        const path = document.createElementNS(ns,'path');
+        for(const [key,val] of Object.entries({d:bubblePaths[letter],fill:'none',stroke:color,'stroke-width':width,'stroke-linecap':'round','stroke-linejoin':'round',transform:'translate(0 '+dy+')'})) path.setAttribute(key,val);
+        glyph.append(path);
+      }
+    }
+    group.append(glyph);
+  });
+  return ((value.length-1)*73+57)*scale;
+}
 class ScoreSheet extends Control {
   connectedCallback() {
     const staff = top => Array.from({length:5}, (_,i) => 'M197 '+(top+27*i)+'H1294').join(' ');
     this.innerHTML = `<svg viewBox="0 0 1491 1055" aria-label="高音和低音大谱表">
       <defs>
         <image id="painted-paper" width="1491" height="1055"/>
+        <filter id="paper-to-alpha" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+          <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -2 -2 -2 0 5.74"/>
+          <feComposite in2="SourceAlpha" operator="in"/>
+        </filter>
+        <g id="ink"><use href="#painted-paper" filter="url(#paper-to-alpha)"/></g>
+        <pattern id="paper-grain" width="110" height="90" patternUnits="userSpaceOnUse"><use href="#painted-paper" x="-630" y="-323"/></pattern>
         <mask id="decor-only" maskUnits="userSpaceOnUse" x="0" y="0" width="1491" height="1055">
           <rect width="1491" height="1055" fill="white"/>
           <path fill="black" d="M300 54h895v270H300z M192 415h1106v214H192z M854 636h278v142H854z M775 791h449v60H775z M275 720h480v211H275z"/>
         </mask>
         <clipPath id="painted-title"><rect x="300" y="54" width="895" height="269"/></clipPath>
-        <clipPath id="painted-ya"><rect x="277" y="722" width="475" height="207"/></clipPath>
         <clipPath id="painted-mouth"><path d="M854 636h278v142H854z M775 791h449v60H775z"/></clipPath>
         <linearGradient id="berry" x2=".8" y2="1"><stop stop-color="#ff8397"/><stop offset=".5" stop-color="#ea385f"/><stop offset="1" stop-color="#f55b74"/></linearGradient>
         <linearGradient id="apricot" x2=".7" y2="1"><stop stop-color="#ffc66b"/><stop offset=".5" stop-color="#ff922c"/><stop offset="1" stop-color="#ef7720"/></linearGradient>
       </defs>
-      <rect width="1491" height="1055" fill="white"/>
+      <rect width="1491" height="1055" fill="#fffdf8"/><rect class="paper-texture" width="1491" height="1055" fill="url(#paper-grain)"/>
       <g class="border-art" pointer-events="none"></g>
       <g text-anchor="middle" fill="#2c6659" font-family="system-ui">
         <text x="745" y="145" font-size="64" font-weight="bold" class="sheet-title"></text>
@@ -37,29 +83,28 @@ class ScoreSheet extends Control {
       <g transform="translate(225 617)" fill="#202020"><path d="M2 1C1 -15 10 -28 26 -28C50 -28 61 -10 55 12C49 36 21 56 0 65C23 49 43 27 44 3C45 -12 39 -24 26 -24C15 -24 8 -16 7 -7C20 -16 31 -3 23 7C15 17 2 12 2 1Z"/><circle cx="66" cy="-13.5" r="4.2"/><circle cx="66" cy="13.5" r="4.2"/></g>
       <g class="notes"></g></g>
       <g class="painted-details" pointer-events="none"></g>
-      <g class="syllable-art" pointer-events="none" transform="translate(313 898)">
+      <g class="syllable-art" pointer-events="none" transform="translate(335 946)">
         <text x="-15" y="-55" font-size="52" text-anchor="end" fill="#ef912d">“</text>
         <path d="M-38 -27l-24 9 M-34 -12l-18 15" stroke="#f6c957" stroke-width="7" stroke-linecap="round"/>
-        <text class="sheet-vowel" font-family="ui-rounded, Trebuchet MS, sans-serif" font-weight="900" stroke-width="2" stroke-linejoin="round"></text>
+        <g class="sheet-vowel"></g>
         <g class="end-mark"><text y="-55" font-size="52" fill="#ef912d">”</text><path d="M24 -20l22 4 M20 -7l14 12" stroke="#f4c75c" stroke-width="7" stroke-linecap="round"/></g>
       </g></svg>`;
     this.watercolor = this.getAttribute('background').includes('webp');
     if (this.watercolor) {
       this.querySelector('#painted-paper').setAttribute('href',this.getAttribute('background'));
-      this.querySelector('.border-art').innerHTML = '<use href="#painted-paper" mask="url(#decor-only)"/>';
+      this.querySelector('.border-art').innerHTML = '<use href="#ink" mask="url(#decor-only)"/>';
       this.querySelector('.studio-mark').style.display = 'none';
       this.querySelector('.painted-details').innerHTML = `
-        <g class="original-title" transform="translate(109 0) scale(.85)"><use href="#painted-paper" clip-path="url(#painted-title)"/></g>
-        <g class="original-ya" transform="translate(87 274) scale(.8)"><use href="#painted-paper" clip-path="url(#painted-ya)"/></g>
-        <g class="mouth" transform="translate(292 350) scale(.71)"><use href="#painted-paper" clip-path="url(#painted-mouth)"/></g>`;
+        <g class="original-title" transform="translate(109 0) scale(.85)"><use href="#ink" clip-path="url(#painted-title)"/></g>
+        <g class="mouth" transform="translate(292 350) scale(.71)"><use href="#ink" clip-path="url(#painted-mouth)"/></g>`;
     }
     this.setSyllable('YA');
     this.bindNotes();
   }
   setSyllable(value) {
     const original = this.watercolor && value === 'YA';
-    this.querySelectorAll('.original-title,.original-ya,.mouth').forEach(part => part.style.display = original ? '' : 'none');
-    this.querySelectorAll('.sheet-title,.sheet-subtitle,.syllable-art').forEach(part => part.style.display = original ? 'none' : '');
+    this.querySelectorAll('.original-title,.mouth').forEach(part => part.style.display = original ? '' : 'none');
+    this.querySelectorAll('.sheet-title,.sheet-subtitle').forEach(part => part.style.display = original ? 'none' : '');
     const colors = ['#eb4969','#ef9134','#60ad62','#4499cd','#9368ba'];
     const paintText = (node, text, palette) => {
       node.replaceChildren();
@@ -73,10 +118,8 @@ class ScoreSheet extends Control {
     paintText(this.querySelector('.sheet-title'),value+' 音练习曲',colors);
     paintText(this.querySelector('.sheet-subtitle'),value+' Vocal Exercise',colors);
     const vowel = this.querySelector('.sheet-vowel');
-    const size = Math.min(110,580/(value.length*.85));
-    vowel.setAttribute('font-size',size);
-    paintText(vowel,value,['url(#berry)','url(#apricot)']);
-    this.querySelector('.end-mark').setAttribute('transform','translate('+(vowel.getComputedTextLength()+9)+' 0)');
+    const width = drawBubbles(vowel,value);
+    this.querySelector('.end-mark').setAttribute('transform','translate('+(width+12)+' 0)');
   }
   bindNotes() {
     this.onclick = event => {
