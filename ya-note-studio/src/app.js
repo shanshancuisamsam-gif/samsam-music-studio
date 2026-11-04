@@ -1,4 +1,4 @@
-import './components.js';
+import { drawHeading } from './components.js';
 import { initial, midi, pitches, restore, storageKey, nextPitch } from './music.js';
 
 const score = document.querySelector('score-sheet');
@@ -14,7 +14,13 @@ function displaySyllable() {
   input.value = input.value.replace(/[^a-z]/gi,'').slice(0,12);
   const syllable = input.value || 'YA';
   score.setSyllable(syllable);
-  document.querySelector('h1').textContent = syllable+' 音符编辑室';
+  const title = document.querySelector('h1');
+  title.setAttribute('aria-label',syllable+' 音符编辑室');
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  const {width} = drawHeading(svg,syllable,'音符编辑室',1250);
+  svg.setAttribute('viewBox','-14 -12 '+(width+26)+' 99');
+  svg.setAttribute('aria-hidden','true');
+  title.replaceChildren(svg);
   document.title = syllable+' 音符编辑室 · Samsam Music Studio';
   try { localStorage.setItem(syllableKey,syllable); } catch {}
 }

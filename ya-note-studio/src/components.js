@@ -46,6 +46,42 @@ function drawBubbles(group,value) {
   });
   return ((value.length-1)*73+57)*scale;
 }
+const titleStrokes = {
+  音:'M28 3l4 4M9 11h44M16 16l5 10M46 16l-6 10M5 29h52M15 37h34v24H15zM17 49h30',
+  练:'M15 5L5 22l11-2M19 15L5 37l15-4M4 53l16-6M27 14h31M43 5L28 35h26M43 24v32q0 6-8 3M30 43l-8 12M51 42l8 10',
+  习:'M7 8h47l-2 42q-1 12-14 8M16 22l12 9M11 48l28-12',
+  曲:'M8 20h47v38H8zM24 5v52M40 5v52M9 39h45',
+  符:'M13 4L5 18M12 10h16M18 12l5 8M40 4l-9 15M38 10h19M46 12l5 8M23 25L8 44M17 37v24M29 34h29M47 24v32q0 5-8 3M30 41l6 7',
+  编:'M14 5L4 22l11-2M18 15L5 37l14-4M4 54l15-6M39 3l5 4M25 12h31v12H26M26 13v19q0 16-7 25M30 32h27v27M30 33v25M32 43h23M39 34v22M48 34v22',
+  辑:'M3 14h21M14 5L6 31h19M17 23v37M3 45l22-4M31 6h22v12H31zM27 25h32M32 26v27M51 25v36M33 34h17M33 43h17M27 54l31-4',
+  室:'M27 4l5 4M8 18v-6h48v6M16 24h32M28 25l-11 12 30-3M41 29l9 9M31 40v18M13 46h36M6 58h51'
+};
+function titleElement(tag, attributes) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const [name,value] of Object.entries(attributes)) el.setAttribute(name,value);
+  return el;
+}
+export function drawHeading(node, syllable, words, maxWidth) {
+  node.replaceChildren();
+  const letters = titleElement('g',{});
+  const word = titleElement('g',{transform:'translate(0 65)'});
+  word.append(letters);
+  const letterWidth = drawBubbles(letters,syllable);
+  const letterScale = 1/Math.min(2.05,800/(syllable.length*73));
+  word.setAttribute('transform','translate(0 63) scale('+letterScale+')');
+  node.append(word);
+  const offset = letterWidth*letterScale+20;
+  const colors = ['#599b64','#408bb7','#8861a8','#cc6d81','#548f82'];
+  [...words].forEach((ch,i) => {
+    const glyph=titleElement('g',{transform:'translate('+(offset+72*i)+' '+(i%2?2:0)+') rotate('+(i%2?2:-2)+' 32 32)'});
+    const path=titleElement('path',{d:titleStrokes[ch],fill:'none',stroke:colors[i%colors.length],'stroke-width':6.3,'stroke-linejoin':'round','stroke-linecap':'round'});
+    glyph.append(path);
+    node.append(glyph);
+  });
+  const width = offset+words.length*72;
+  const scale = Math.min(1,maxWidth/width);
+  return {width,scale};
+}
 class ScoreSheet extends Control {
   connectedCallback() {
     const staff = top => Array.from({length:5}, (_,i) => 'M197 '+(top+27*i)+'H1294').join(' ');
@@ -70,7 +106,7 @@ class ScoreSheet extends Control {
       <rect width="1491" height="1055" fill="#fffdf8"/><rect class="paper-texture" width="1491" height="1055" fill="url(#paper-grain)"/>
       <g class="border-art" pointer-events="none"></g>
       <g text-anchor="middle" fill="#2c6659" font-family="system-ui">
-        <text x="745" y="145" font-size="64" font-weight="bold" class="sheet-title"></text>
+        <g class="sheet-heading" aria-label="练习曲标题"></g>
         <text x="745" y="213" font-size="34" class="sheet-subtitle"></text>
         <text class="studio-mark" x="745" y="1017" font-size="23">samsam music studio</text>
       </g>
@@ -95,7 +131,7 @@ class ScoreSheet extends Control {
       this.querySelector('.border-art').innerHTML = '<use href="#ink" mask="url(#decor-only)"/>';
       this.querySelector('.studio-mark').style.display = 'none';
       this.querySelector('.painted-details').innerHTML = `
-        <g class="original-title" transform="translate(109 0) scale(.85)"><use href="#ink" clip-path="url(#painted-title)"/></g>
+        
         <g class="mouth" transform="translate(292 350) scale(.71)"><use href="#ink" clip-path="url(#painted-mouth)"/></g>`;
     }
     this.setSyllable('YA');
@@ -103,8 +139,8 @@ class ScoreSheet extends Control {
   }
   setSyllable(value) {
     const original = this.watercolor && value === 'YA';
-    this.querySelectorAll('.original-title,.mouth').forEach(part => part.style.display = original ? '' : 'none');
-    this.querySelectorAll('.sheet-title,.sheet-subtitle').forEach(part => part.style.display = original ? 'none' : '');
+    this.querySelectorAll('.mouth').forEach(part => part.style.display = original ? '' : 'none');
+
     const colors = ['#eb4969','#ef9134','#60ad62','#4499cd','#9368ba'];
     const paintText = (node, text, palette) => {
       node.replaceChildren();
@@ -115,11 +151,15 @@ class ScoreSheet extends Control {
         node.append(span);
       });
     };
-    paintText(this.querySelector('.sheet-title'),value+' 音练习曲',colors);
+    const heading = this.querySelector('.sheet-heading');
+    const {width,scale} = drawHeading(heading,value,'音练习曲',670);
+    const zoom = 1.37*scale;
+    heading.setAttribute('transform','translate('+(745-width*zoom/2)+' 62) scale('+zoom+')');
+    heading.setAttribute('aria-label',value+' 音练习曲');
     paintText(this.querySelector('.sheet-subtitle'),value+' Vocal Exercise',colors);
     const vowel = this.querySelector('.sheet-vowel');
-    const width = drawBubbles(vowel,value);
-    this.querySelector('.end-mark').setAttribute('transform','translate('+(width+12)+' 0)');
+    const vowelWidth = drawBubbles(vowel,value);
+    this.querySelector('.end-mark').setAttribute('transform','translate('+(vowelWidth+12)+' 0)');
   }
   bindNotes() {
     this.onclick = event => {

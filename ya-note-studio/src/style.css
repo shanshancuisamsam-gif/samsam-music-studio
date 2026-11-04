@@ -3,3 +3,6 @@
 
 .pitches{grid-template-columns:repeat(2,minmax(0,1fr))}.pitch-class{display:flex;align-items:center;gap:2px;color:#56645a;font-size:11px}.pitch-class button{flex:1;min-width:0}
 #syllable{width:8em;font:inherit;border:1px solid var(--line);border-radius:8px;padding:6px 9px;margin:0 0 12px 5px}
+
+header b{font-family:ui-rounded,"Trebuchet MS",system-ui,sans-serif;font-weight:800;letter-spacing:-.035em}
+.intro>div{min-width:0}.intro h1{width:clamp(235px,39vw,510px);max-width:100%;margin:4px 0}.intro h1 svg{overflow:visible}.intro button{flex-shrink:0}
