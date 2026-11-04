@@ -2,3 +2,4 @@
 @page{size:A4 landscape;margin:0}@media print{body,main,section,article{display:block;margin:0;padding:0;background:white;border:0;border-radius:0;max-width:none}header,.intro,aside,.bar,.halo{display:none}.selected{fill:black}svg{width:297mm;height:210mm}}
 
 .pitches{grid-template-columns:repeat(2,minmax(0,1fr))}.pitch-class{display:flex;align-items:center;gap:2px;color:#56645a;font-size:11px}.pitch-class button{flex:1;min-width:0}
+#syllable{width:8em;font:inherit;border:1px solid var(--line);border-radius:8px;padding:6px 9px;margin:0 0 12px 5px}

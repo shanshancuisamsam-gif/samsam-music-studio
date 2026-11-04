@@ -7,7 +7,27 @@ const player = document.querySelector('melody-player');
 let values = initial.slice(), active = 0, sound, run = 0, playing = false;
 let voices = [], timer;
 try { values = restore(JSON.parse(localStorage.getItem(storageKey))); } catch {}
-function draw() { score.update(values,active); editor.update(values,active); }
+const input = editor.querySelector('#syllable');
+const syllableKey = 'samsam-ya-syllable.v1';
+try { input.value = localStorage.getItem(syllableKey) || 'YA'; } catch {}
+function displaySyllable() {
+  input.value = input.value.replace(/[^a-z]/gi,'').slice(0,12);
+  const syllable = input.value || 'YA';
+  score.setSyllable(syllable);
+  document.querySelector('h1').textContent = syllable+' 音符编辑室';
+  document.title = syllable+' 音符编辑室 · Samsam Music Studio';
+  try { localStorage.setItem(syllableKey,syllable); } catch {}
+}
+input.oninput = displaySyllable;
+input.onblur = () => { if (!input.value) input.value = 'YA'; };
+displaySyllable();
+function draw() {
+  score.update(values,active);
+  const selector = editor.querySelector('.octave');
+  selector.value = pitches[values[active]].at(-1);
+  editor.populate();
+  editor.update(values,active);
+}
 function save() {
   try { localStorage.setItem(storageKey,JSON.stringify(values)); } catch {}
   draw();
