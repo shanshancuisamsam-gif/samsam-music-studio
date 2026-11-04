@@ -1,5 +1,5 @@
 import './components.js';
-import { initial, midi, pitches, restore, storageKey } from './music.js';
+import { initial, midi, pitches, restore, storageKey, nextPitch } from './music.js';
 
 const score = document.querySelector('score-sheet');
 const editor = document.querySelector('pitch-editor');
@@ -27,7 +27,7 @@ function change(value) {
 }
 document.addEventListener('pick',e => { active = e.detail; draw(); });
 document.addEventListener('pitch',e => change(e.detail));
-document.addEventListener('step',e => change(values[active]+e.detail));
+document.addEventListener('step',e => change(nextPitch(values[active],e.detail)));
 document.addEventListener('reset',() => { stop(); values=initial.slice(); active=0; save(); });
 document.addEventListener('halt',stop);
 document.addEventListener('play',async event => {

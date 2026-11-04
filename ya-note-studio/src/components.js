@@ -1,4 +1,4 @@
-import { pitches, staffY } from './music.js';
+import { pitches, staffY, choices, symbolsFor } from './music.js';
 
 class Control extends HTMLElement {
   send(type, value) {
@@ -26,12 +26,14 @@ class ScoreSheet extends Control {
     };
   }
   update(values, active) {
+    const symbols = symbolsFor(values);
     this.querySelector('.notes').innerHTML = values.map((pitch,index) => {
-      const x = 385 + 180 * index, y = staffY(pitch), up = pitch < 6;
+      const x = 385 + 180 * index, y = staffY(pitch), up = y > staffY(6);
       return `<g tabindex="0" role="button" data-note="${index}" aria-pressed="${index===active}" aria-label="第 ${index+1} 个音 ${pitches[pitch]}" class="${index===active?'selected':''}">
         <rect x="${x-65}" y="345" width="130" height="308" fill="transparent"/>
         ${index===active?`<ellipse class="halo" cx="${x}" cy="${y}" rx="31" ry="23"/>`:''}
-        ${pitch===0?`<path d="M${x-25} 599h50" stroke="currentColor" stroke-width="3"/>`:''}
+        ${y===599?`<path d="M${x-25} 599h50" stroke="currentColor" stroke-width="3"/>`:''}
+        <text x="${x-29}" y="${y+9}" text-anchor="end" font-family="serif" font-size="40">${symbols[index]}</text>
         <rect x="${x+(up?12.5:-15.5)}" y="${up?y-92:y}" width="3.2" height="92"/>
         <ellipse cx="${x}" cy="${y}" rx="17" ry="11" transform="rotate(-18 ${x} ${y})"/>
         <text x="${x}" y="642" text-anchor="middle" font-size="22">${pitches[pitch]}</text></g>`;
@@ -41,12 +43,21 @@ class ScoreSheet extends Control {
 class PitchEditor extends Control {
   connectedCallback() {
     this.innerHTML = `<div class="panel"><small>01 &nbsp; / &nbsp; NOTE EDITOR</small><h2>音高编辑</h2><label>选择音符 · Note</label><div class="steps"></div><label>选择音高 · Pitch</label><div class="pitches"></div><p>← → 选音符　↑ ↓ 调音高</p><button class="reset">恢复初始旋律</button></div>`;
-    for (const [group, labels, action] of [['.steps',Array(5).fill(''),'pick'],['.pitches',pitches,'pitch']]) {
-      labels.forEach((label, index) => {
-        const button = document.createElement('button');
-        button.textContent = label;
-        button.onclick = () => this.send(action,index);
-        this.querySelector(group).append(button);
+    const addButton = (parent, action, index) => {
+      const button = document.createElement('button');
+      button.dataset.index = index;
+      button.onclick = () => this.send(action,index);
+      parent.append(button);
+      return button;
+    };
+    for (let index=0; index<5; index++) addButton(this.querySelector('.steps'),'pick',index);
+    for (const spellings of choices) {
+      const group = document.createElement('div');
+      group.className = 'pitch-class';
+      this.querySelector('.pitches').append(group);
+      spellings.forEach((index, position) => {
+        if (position) group.append(' = ');
+        addButton(group,'pitch',index).textContent = pitches[index];
       });
     }
     this.querySelector('.reset').onclick = () => this.send('reset');
@@ -57,7 +68,7 @@ class PitchEditor extends Control {
       button.setAttribute('aria-label', '第 '+(index+1)+' 个音 '+button.textContent);
       button.setAttribute('aria-pressed',index===active);
     });
-    this.querySelectorAll('.pitches button').forEach((button,index) => button.setAttribute('aria-pressed',index===values[active]));
+    this.querySelectorAll('.pitches button').forEach((button,index) => button.setAttribute('aria-pressed',Number(button.dataset.index)===values[active]));
   }
 }
 class MelodyPlayer extends Control {
