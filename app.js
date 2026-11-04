@@ -1,0 +1,18 @@
+const lessons=[
+['认识歌曲和故事','读懂歌词，找到情感','唱歌的第一步，是听懂故事。先选一首你喜欢的歌，读一遍歌词：谁在说话？发生了什么？带着什么心情？接着，用说话的方式念出最打动你的一句。让情感先走进声音，再尝试轻轻地唱出来。'],
+['听懂音乐','感受旋律、节奏与结构','先完整听一遍歌曲，不急着跟唱。第二遍，轻轻拍出稳定的节拍，感受音乐的快慢。再听听旋律是向上走还是向下走，分辨主歌和副歌。你可以画一条旋律线，让耳朵带着声音一起走。'],
+['学会科学发声','呼吸、开口、咬字与音准','让肩膀放松，站得自然，轻轻吸气，不要用力抬胸或憋气。先以舒服的音高轻轻哼鸣，感受平稳的气息。再慢慢打开元音，清楚地说出歌词。保持轻松，不追求大音量；如果嗓子不舒服，就停下来休息。'],
+['学习不同风格','同一句歌词，不同的表达','一首歌可以有很多种颜色。试着用温柔的语气说一句歌词，再用轻快的语气说一次。听听节奏、咬字和力度有什么变化。流行、民谣或律动感强的歌曲，都可以从聆听开始，找到适合自己的表达。'],
+['训练小耳朵','听音高、节奏、音色与和声','闭上眼睛，听一小段旋律，再轻轻哼回来。先模仿两个或三个音，分辨哪个更高、哪个更低。接着拍一个短节奏，再重复一次。练习听见细节，比一次唱很多更重要。'],
+['表演与音乐实践','从练习室，走向小小舞台','选一段你已经熟悉的副歌，想象面前有一位愿意听你讲故事的朋友。自然站立，抬起目光，把歌词的意思送出去。你可以和朋友合唱，也可以录一小段作品，回听声音与情感是否一致。'],
+['自主学习与成长','记录变化，找到自己的声音','每次练习后，记下一个小发现：今天哪里更轻松？哪一句还需要慢慢练？为下一次只设一个小目标。定期回听自己的录音，关注自然、稳定与表达。你不需要变成别人，每天一点点，慢慢找到自己的声音。']];
+let current=0,speechRun=0;
+const $=id=>document.getElementById(id);
+function stopSpeech(){speechRun++;if('speechSynthesis'in window)speechSynthesis.cancel();document.body.classList.remove('playing');$('speak').textContent='▶ 听老师讲解';$('voiceStatus').textContent='中文语音试听'}
+function selectLesson(i,scroll=false){stopSpeech();current=i;$('lessonTitle').textContent=lessons[i][0];$('lessonText').textContent=lessons[i][2];$('lessonCount').textContent=`LESSON ${String(i+1).padStart(2,'0')} / 07`;document.querySelectorAll('.lessonitem').forEach((b,n)=>{b.classList.toggle('active',i===n);b.setAttribute('aria-pressed',i===n)});if(scroll)$('classroom').scrollIntoView({behavior:'smooth'})}
+lessons.forEach((l,i)=>{const b=document.createElement('button');b.className='lessonitem';b.innerHTML=`<span class="num">0${i+1}</span><span><strong>${l[0]}</strong><small>${l[1]}</small></span><span class="arrow">↗</span>`;b.onclick=()=>selectLesson(i);$('lessonlist').append(b);const c=document.createElement('button');c.className='pathcard';c.innerHTML=`<span>0${i+1}</span><em>↗</em><h3>${l[0]}</h3><p>${l[1]}</p>`;c.onclick=()=>selectLesson(i,true);$('pathcards').append(c)});
+function speak(text){stopSpeech();if(!('speechSynthesis'in window)){$('voiceStatus').textContent='此浏览器不支持语音，请阅读讲解文字';return}const run=++speechRun;const u=new SpeechSynthesisUtterance(text);u.lang='zh-CN';u.rate=.9;const voices=speechSynthesis.getVoices();u.voice=voices.find(v=>v.lang==='zh-CN')||voices.find(v=>v.lang.startsWith('zh'))||null;u.onstart=()=>{if(run!==speechRun)return;document.body.classList.add('playing');$('speak').textContent='■ 停止讲解';$('voiceStatus').textContent='Samsam 课堂 · 语音播放中'};u.onend=()=>{if(run===speechRun)stopSpeech()};u.onerror=()=>{if(run===speechRun){stopSpeech();$('voiceStatus').textContent='语音暂不可用，请阅读讲解文字'}};speechSynthesis.speak(u)}
+$('speak').onclick=()=>document.body.classList.contains('playing')?stopSpeech():speak(lessons[current][2]);$('welcome').onclick=()=>speak('你好，我是 Samsam。欢迎来到流行声乐课堂。让我们从第一口呼吸开始，听懂音乐，理解歌曲，慢慢找到属于自己的声音。');$('next').onclick=()=>selectLesson((current+1)%7);selectLesson(0);
+let breathTimer,breathRunning=false,breathTick=0;
+function resetBreath(){clearInterval(breathTimer);breathRunning=false;$('breathcircle').classList.remove('inhale');$('breathBtn').textContent='再练习一次 ↗';$('breathLabel').textContent='做得很好';$('breathSub').textContent='回到自然呼吸，放松一下'}
+$('breathBtn').onclick=()=>{if(breathRunning){resetBreath();return}breathRunning=true;breathTick=0;$('breathBtn').textContent='结束练习';function tick(){if(breathTick>=30){resetBreath();return}let phase=breathTick%10;const inhale=phase<4;$('breathcircle').classList.toggle('inhale',inhale);$('breathLabel').textContent=inhale?'轻轻吸气':'缓缓呼气';$('breathSub').textContent=`${inhale?4-phase:10-phase} 秒 · 第 ${Math.floor(breathTick/10)+1} / 3 轮`;breathTick++}tick();breathTimer=setInterval(tick,1000)};window.addEventListener('pagehide',()=>{stopSpeech();clearInterval(breathTimer)});
