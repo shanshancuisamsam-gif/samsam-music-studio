@@ -78,15 +78,22 @@ document.addEventListener('play',async event => {
   playing = true;
   player.state(true,'播放中…');
   try {
-    sound ??= new AudioContext();
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!sound || sound.state === 'closed') sound = new AudioContextClass();
     await sound.resume();
     if (token !== run) return;
+    if (sound.state !== 'running') {
+      stop();
+      player.state(false,'声音尚未启动，请再次点击试听，并确认浏览器允许播放声音。');
+      return;
+    }
     const start = sound.currentTime + .04;
     values.forEach((pitch,index) => {
       const tone = sound.createOscillator(), gain = sound.createGain(), time = start + index*beat;
       tone.frequency.value = 440 * 2**((midi[pitch]-69)/12);
       gain.gain.setValueAtTime(.0001,time);
-      gain.gain.exponentialRampToValueAtTime(.22,time+.025);
+      gain.gain.exponentialRampToValueAtTime(.65,time+.025);
+      gain.gain.exponentialRampToValueAtTime(.48,time+beat-.10);
       gain.gain.exponentialRampToValueAtTime(.0001,time+beat-.03);
       tone.connect(gain).connect(sound.destination);
       tone.onended = () => { tone.disconnect(); gain.disconnect(); };
