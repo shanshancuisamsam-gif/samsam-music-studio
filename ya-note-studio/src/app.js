@@ -11,7 +11,7 @@ const input = editor.querySelector('#syllable');
 const syllableKey = 'samsam-ya-syllable.v1';
 try { input.value = localStorage.getItem(syllableKey) || 'YA'; } catch {}
 function displaySyllable() {
-  input.value = input.value.replace(/[^a-z]/gi,'').slice(0,12);
+  input.value = input.value.replace(/[^a-z]/gi,'').slice(0,12).toUpperCase();
   const syllable = input.value || 'YA';
   score.setSyllable(syllable);
   const title = document.querySelector('h1');
