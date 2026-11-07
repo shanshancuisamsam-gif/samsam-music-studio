@@ -92,7 +92,8 @@ class ScoreSheet extends Control {
           <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -2 -2 -2 0 5.74"/>
           <feComposite in2="SourceAlpha" operator="in"/>
         </filter>
-        <g id="ink"><use href="#painted-paper" filter="url(#paper-to-alpha)"/></g>
+        
+        <clipPath id="ma-crop"><rect x="180" y="345" width="1140" height="320"/></clipPath><clipPath id="me-crop"><rect x="180" y="345" width="1140" height="320"/></clipPath><filter id="ma-ink" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -3 -3 -3 0 7.6"/><feComposite in2="SourceAlpha" operator="in"/></filter><g id="ink"><use href="#painted-paper" filter="url(#paper-to-alpha)"/></g>
         <pattern id="paper-grain" width="110" height="90" patternUnits="userSpaceOnUse"><use href="#painted-paper" x="-630" y="-323"/></pattern>
         <mask id="decor-only" maskUnits="userSpaceOnUse" x="0" y="0" width="1491" height="1055">
           <rect width="1491" height="1055" fill="white"/>
@@ -100,12 +101,6 @@ class ScoreSheet extends Control {
         </mask>
         <clipPath id="painted-title"><rect x="300" y="54" width="895" height="269"/></clipPath>
         <clipPath id="painted-mouth"><path d="M854 636h278v142H854z M775 791h449v60H775z"/></clipPath>
-        <clipPath id="ma-crop"><rect x="180" y="345" width="1140" height="320"/></clipPath>
-        <clipPath id="me-crop"><rect x="180" y="345" width="1140" height="320"/></clipPath>
-        <filter id="ma-ink" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
-          <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -3 -3 -3 0 7.6"/>
-          <feComposite in2="SourceAlpha" operator="in"/>
-        </filter>
         <linearGradient id="berry" x2=".8" y2="1"><stop stop-color="#ff8397"/><stop offset=".5" stop-color="#ea385f"/><stop offset="1" stop-color="#f55b74"/></linearGradient>
         <linearGradient id="apricot" x2=".7" y2="1"><stop stop-color="#ffc66b"/><stop offset=".5" stop-color="#ff922c"/><stop offset="1" stop-color="#ef7720"/></linearGradient>
       </defs>
@@ -126,9 +121,7 @@ class ScoreSheet extends Control {
       <g class="notes"></g></g>
       <g class="painted-details" pointer-events="none"></g>
       <g class="ma-mouth" style="display:none" pointer-events="none" aria-label="Press lips together, lower the jaw, say MA">
-        <svg x="842" y="800" width="319" height="100" viewBox="180 345 1140 320" overflow="hidden">
-          <g clip-path="url(#ma-crop)"><image href="assets/ma-approved.png" width="1536" height="1024" filter="url(#ma-ink)"/></g>
-        </svg>
+        <svg x="842" y="800" width="319" height="100" viewBox="180 345 1140 320" overflow="hidden"><g clip-path="url(#ma-crop)"><image href="assets/ma-approved.png" width="1536" height="1024" filter="url(#ma-ink)"/></g></svg>
         <g text-anchor="middle" font-family="'Arial Rounded MT Bold',sans-serif" fill="#946348" font-weight="600">
           <text x="910" y="918" font-size="17">Press lips together</text>
           <text x="1100" y="918" font-size="17">Lower the jaw</text>
@@ -136,13 +129,14 @@ class ScoreSheet extends Control {
         </g>
       </g>
       <g class="me-mouth" style="display:none" pointer-events="none" aria-label="Press lips together, open with a flat gentle smile, say ME">
-        <svg x="842" y="800" width="319" height="100" viewBox="180 345 1140 320" overflow="hidden">
-          <g clip-path="url(#me-crop)"><image href="assets/me-approved.png" width="1536" height="1024" filter="url(#ma-ink)"/></g>
-        </svg>
+        <!-- Independent alpha artwork, laid directly over the worksheet paper.
+             No teaching-card crop, paper rectangle, or color-key filter. -->
+        <image class="me-gesture-art" href="assets/me-mouth-transparent.png" x="842" y="780" width="319" height="125" preserveAspectRatio="xMidYMid meet"/>
         <g text-anchor="middle" font-family="'Arial Rounded MT Bold',sans-serif" fill="#946348" font-weight="600">
           <text x="910" y="918" font-size="17">Press lips together</text>
-          <text x="1100" y="918" font-size="14">Open with a flat, gentle smile</text>
-          <text x="1001.5" y="953" font-size="25">Say “ME”</text>
+          <text x="1100" y="918" font-size="17">Open with a flat,</text>
+          <text x="1100" y="937" font-size="17">gentle smile</text>
+          <text x="1001.5" y="974" font-size="25">Say “ME”</text>
         </g>
       </g>
       <g class="syllable-art" pointer-events="none" transform="translate(335 946)">
@@ -151,7 +145,7 @@ class ScoreSheet extends Control {
         <g class="sheet-vowel"></g>
         <g class="end-mark"><text y="-55" font-size="52" fill="#ef912d">”</text><path d="M24 -20l22 4 M20 -7l14 12" stroke="#f4c75c" stroke-width="7" stroke-linecap="round"/></g>
       </g></svg>`;
-    this.watercolor = this.getAttribute('background').includes('webp');
+    this.watercolor = (this.getAttribute('background') || '').includes('webp');
     if (this.watercolor) {
       this.querySelector('#painted-paper').setAttribute('href',this.getAttribute('background'));
       this.querySelector('.border-art').innerHTML = '<use href="#ink" mask="url(#decor-only)"/>';
@@ -164,12 +158,11 @@ class ScoreSheet extends Control {
     this.bindNotes();
   }
   setSyllable(value) {
-    const normalized = String(value || 'YA').replace(/[^a-z]/gi,'').slice(0,12).toUpperCase() || 'YA';
-    value = normalized;
-    const original = this.watercolor && normalized === 'YA';
+    value = String(value ?? '').replace(/[^a-z]/gi, '').slice(0, 12).toUpperCase() || 'YA';
+    this.querySelector('.ma-mouth').style.display = value === 'MA' ? '' : 'none';
+    this.querySelector('.me-mouth').style.display = value === 'ME' ? '' : 'none';
+    const original = this.watercolor && value === 'YA';
     this.querySelectorAll('.mouth').forEach(part => part.style.display = original ? '' : 'none');
-    this.querySelectorAll('.ma-mouth').forEach(part => part.style.display = normalized === 'MA' ? '' : 'none');
-    this.querySelectorAll('.me-mouth').forEach(part => part.style.display = normalized === 'ME' ? '' : 'none');
 
     const colors = ['#eb4969','#ef9134','#60ad62','#4499cd','#9368ba'];
     const paintText = (node, text, palette) => {
@@ -227,7 +220,7 @@ class ScoreSheet extends Control {
 }
 class PitchEditor extends Control {
   connectedCallback() {
-    this.innerHTML = `<div class="panel"><small>01 &nbsp; / &nbsp; NOTE EDITOR</small><h2>音高编辑</h2><label>练声音节 · Syllable <input id="syllable" value="YA" maxlength="12" lang="en" inputmode="text" autocapitalize="off" spellcheck="false"></label><br><label>选择音符 · Note</label><div class="steps"></div><div class="note-count"><button class="insert">＋ 加音</button> <button class="remove">− 删音</button> <output></output></div><label>八度组 · Octave <select class="octave"><option>3</option><option selected>4</option><option>5</option></select></label><div class="pitches"></div><p>← → 选音符　↑ ↓ 调音高</p><button class="reset">恢复初始旋律</button></div>`;
+    this.innerHTML = `<div class="panel"><small>01 &nbsp; / &nbsp; NOTE EDITOR</small><h2>音高编辑</h2><label>练声音节 · Syllable <input id="syllable" value="YA" maxlength="12" lang="en" inputmode="text" autocapitalize="characters" spellcheck="false"></label><br><label>选择音符 · Note</label><div class="steps"></div><div class="note-count"><button class="insert">＋ 加音</button> <button class="remove">− 删音</button> <output></output></div><label>八度组 · Octave <select class="octave"><option>3</option><option selected>4</option><option>5</option></select></label><div class="pitches"></div><p>← → 选音符　↑ ↓ 调音高</p><button class="reset">恢复初始旋律</button></div>`;
     const addButton = (parent, action, index) => {
       const button = document.createElement('button');
       button.dataset.index = index;
