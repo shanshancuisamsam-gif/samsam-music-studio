@@ -101,6 +101,7 @@ class ScoreSheet extends Control {
         <clipPath id="painted-title"><rect x="300" y="54" width="895" height="269"/></clipPath>
         <clipPath id="painted-mouth"><path d="M854 636h278v142H854z M775 791h449v60H775z"/></clipPath>
         <clipPath id="ma-crop"><rect x="180" y="345" width="1140" height="320"/></clipPath>
+        <clipPath id="me-crop"><rect x="180" y="345" width="1140" height="320"/></clipPath>
         <filter id="ma-ink" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
           <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -3 -3 -3 0 7.6"/>
           <feComposite in2="SourceAlpha" operator="in"/>
@@ -134,6 +135,16 @@ class ScoreSheet extends Control {
           <text x="1001.5" y="953" font-size="25">Say “MA”</text>
         </g>
       </g>
+      <g class="me-mouth" style="display:none" pointer-events="none" aria-label="Press lips together, open with a flat gentle smile, say ME">
+        <svg x="842" y="800" width="319" height="100" viewBox="180 345 1140 320" overflow="hidden">
+          <g clip-path="url(#me-crop)"><image href="assets/me-approved.png" width="1536" height="1024" filter="url(#ma-ink)"/></g>
+        </svg>
+        <g text-anchor="middle" font-family="'Arial Rounded MT Bold',sans-serif" fill="#946348" font-weight="600">
+          <text x="910" y="918" font-size="17">Press lips together</text>
+          <text x="1100" y="918" font-size="14">Open with a flat, gentle smile</text>
+          <text x="1001.5" y="953" font-size="25">Say “ME”</text>
+        </g>
+      </g>
       <g class="syllable-art" pointer-events="none" transform="translate(335 946)">
         <text x="-15" y="-55" font-size="52" text-anchor="end" fill="#ef912d">“</text>
         <path d="M-38 -27l-24 9 M-34 -12l-18 15" stroke="#f6c957" stroke-width="7" stroke-linecap="round"/>
@@ -158,6 +169,7 @@ class ScoreSheet extends Control {
     const original = this.watercolor && normalized === 'YA';
     this.querySelectorAll('.mouth').forEach(part => part.style.display = original ? '' : 'none');
     this.querySelectorAll('.ma-mouth').forEach(part => part.style.display = normalized === 'MA' ? '' : 'none');
+    this.querySelectorAll('.me-mouth').forEach(part => part.style.display = normalized === 'ME' ? '' : 'none');
 
     const colors = ['#eb4969','#ef9134','#60ad62','#4499cd','#9368ba'];
     const paintText = (node, text, palette) => {
